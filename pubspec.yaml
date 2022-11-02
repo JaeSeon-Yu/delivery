@@ -38,6 +38,8 @@ dependencies:
   dio: ^4.0.6
   logger:
   flutter_secure_storage: ^6.0.0
+  freezed_annotation:
+  json_annotation:
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +51,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+  freezed:
+  build_runner:
+  json_serializable:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

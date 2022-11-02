@@ -88,10 +88,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     );
                     
-                    final refrechToken = resp.data['refreshToken'];
+                    final refreshToken = resp.data['refreshToken'];
                     final accessToken = resp.data['accessToken'];
                     
-                    await storage.write(key: REFRESH_TOKEN_KEY, value: refrechToken);
+                    await storage.write(key: REFRESH_TOKEN_KEY, value: refreshToken);
                     await storage.write(key: ACCESS_TOKEN_KEY, value: accessToken);
 
                     Navigator.of(context).push(
@@ -108,17 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 16,
                 ),
                 TextButton(
-                  onPressed: () async {
-                    final resp = await dio.post(
-                      '$ip/auth/token',
-                      options: Options(
-                        headers: {
-                          'authorization': 'Bearer ${storage.read(key: REFRESH_TOKEN_KEY)}',
-                        },
-                      ),
-                    );
-
-                    storage.write(key: ACCESS_TOKEN_KEY, value: resp.data['accessToken']);
+                  onPressed: () {
                   },
                   child: const Text('회원가입'),
                   style: TextButton.styleFrom(
