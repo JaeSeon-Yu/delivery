@@ -1,25 +1,36 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:actual/common/utils/data_utils.dart';
+import 'package:json_annotation/json_annotation.dart';
 
-part 'restaurant_model.freezed.dart';
 part 'restaurant_model.g.dart';
 
-enum RestaurantPrice{
-  expensive, medium, cheap
-}
+enum RestaurantPrice { expensive, medium, cheap }
 
-@freezed
-class RestaurantModel with _$RestaurantModel {
-  factory RestaurantModel({
-  required final String id,
-  required final String name,
-  required final String thumbUrl,
-  required final List<String> tags,
-  required final RestaurantPrice priceRange,
-  required final double ratings,
-  required final int ratingsCount,
-  required final int deliveryTime,
-  required final int deliveryFee,
-  }) = _RestaurantModel;
+@JsonSerializable()
+class RestaurantModel {
+  final String id;
+  final String name;
+  @JsonKey(fromJson: DataUtils.pathToUrl)
+  final String thumbUrl;
+  final List<String> tags;
+  final RestaurantPrice priceRange;
+  final double ratings;
+  final int ratingsCount;
+  final int deliveryTime;
+  final int deliveryFee;
 
-  factory RestaurantModel.fromJson(Map<String, dynamic> json) => _$RestaurantModelFromJson(json);
+  RestaurantModel({
+    required this.id,
+    required this.name,
+    required this.thumbUrl,
+    required this.tags,
+    required this.priceRange,
+    required this.ratings,
+    required this.ratingsCount,
+    required this.deliveryTime,
+    required this.deliveryFee,
+  });
+
+  factory RestaurantModel.fromJson(Map<String,dynamic> json) => _$RestaurantModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$RestaurantModelToJson(this);
 }
