@@ -11,6 +11,7 @@ import '../../common/const/data.dart';
 
 part 'restaurant_repository.g.dart';
 
+
 final restaurantRepositoryProvider = Provider(
   (ref) {
     final dio = ref.watch(dioProvider);
