@@ -1,5 +1,6 @@
 import 'package:actual/common/layout/default_layout.dart';
 import 'package:actual/product/component/product_card.dart';
+import 'package:actual/rating/component/rating_card.dart';
 import 'package:actual/restaurant/component/restaurant_card.dart';
 import 'package:actual/restaurant/model/restaurant_detail_model.dart';
 import 'package:actual/restaurant/model/restaurant_model.dart';
@@ -52,6 +53,18 @@ class _RestaurantDetailScreenState
           if (state is RestaurantDetailModel) _renderLabel(),
           if (state is RestaurantDetailModel)
             _renderProducts(products: state.products),
+          SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverToBoxAdapter(
+              child: RatingCard(
+                avatarImage: AssetImage('asset/img/logo/codefactory_logo.png'),
+                images: [],
+                rating: 4,
+                email: 'emai@l.co.kr',
+                content: 'conten123t',
+              ),
+            ),
+          ),
         ],
       ),
     );
