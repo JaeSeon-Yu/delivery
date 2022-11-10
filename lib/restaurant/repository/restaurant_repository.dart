@@ -12,8 +12,7 @@ import '../../common/const/data.dart';
 
 part 'restaurant_repository.g.dart';
 
-
-final restaurantRepositoryProvider = Provider(
+final restaurantRepositoryProvider = Provider<RestaurantRepository>(
   (ref) {
     final dio = ref.watch(dioProvider);
 
@@ -24,7 +23,8 @@ final restaurantRepositoryProvider = Provider(
 );
 
 @RestApi()
-abstract class RestaurantRepository implements IBasePaginationRepository<RestaurantModel>{
+abstract class RestaurantRepository
+    implements IBasePaginationRepository<RestaurantModel> {
   factory RestaurantRepository(Dio dio, {String baseUrl}) =
       _RestaurantRepository;
 

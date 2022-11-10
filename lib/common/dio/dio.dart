@@ -11,7 +11,7 @@ final dioProvider = Provider((ref) {
   final storage = ref.watch(secureStorageProvider);
 
   dio.interceptors.add(
-    CustomInterceptor(storage: storage),
+    CustomInterceptor(storage: storage, ref: ref),
   );
 
   return dio;
@@ -19,10 +19,9 @@ final dioProvider = Provider((ref) {
 
 class CustomInterceptor extends Interceptor {
   final FlutterSecureStorage storage;
+  final Ref ref;
 
-  CustomInterceptor({
-    required this.storage,
-  });
+  CustomInterceptor({required this.storage, required this.ref});
 
   // 요청을 받을 때
   @override
@@ -55,7 +54,8 @@ class CustomInterceptor extends Interceptor {
 
   // 응답을 받을 때
   @override
-  void onResponse(Response response, ResponseInterceptorHandler handler) {
+  Future<void> onResponse(
+      Response response, ResponseInterceptorHandler handler) async {
     Logger().i(
         '[RES] [${response.requestOptions.method}] ${response.requestOptions.uri}');
 
