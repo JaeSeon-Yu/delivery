@@ -1,18 +1,14 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:actual/common/component/custom_text_form_field.dart';
 import 'package:actual/common/const/colors.dart';
-import 'package:actual/common/const/data.dart';
 import 'package:actual/common/layout/default_layout.dart';
-import 'package:actual/common/secure_storage/secure_storage.dart';
-import 'package:actual/common/view/root_tab.dart';
-import 'package:dio/dio.dart';
+import 'package:actual/user/model/user_model.dart';
+import 'package:actual/user/provider/user_me_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logger/logger.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
+  static String get routeName => 'login';
+
   const LoginScreen({Key? key}) : super(key: key);
 
   @override
@@ -23,15 +19,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String username = '';
   String password = '';
 
-
   @override
   Widget build(BuildContext context) {
-    final dio = Dio();
-
-    const emulatorIp = 'http://10.0.2.2:3000';
-    const simulatorIp = 'http://127.0.0.1:3000';
-
-    final ip = Platform.isAndroid ? emulatorIp : simulatorIp;
+    final state = ref.watch(userMeProvider);
 
     return DefaultLayout(
       child: SingleChildScrollView(
@@ -51,10 +41,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const _SubTitle(),
                 Image.asset(
                   'asset/img/misc/logo.png',
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width / 3 * 2,
+                  width: MediaQuery.of(context).size.width / 3 * 2,
                 ),
                 CustomTextFormField(
                   hintText: '이메일을 입력해주세요.',
@@ -76,33 +63,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   height: 16,
                 ),
                 ElevatedButton(
-                  onPressed: () async {
-                    final rawString = '$username:$password';
-                    Codec<String, String> stringToBase64 = utf8.fuse(base64);
-                    String token = stringToBase64.encode(rawString);
-
-                    final resp = await dio.post(
-                      '$ip/auth/login',
-                      options: Options(
-                        headers: {
-                          'authorization': 'Basic $token',
+                  onPressed: state is UserModelLoading
+                      ? null
+                      : () async {
+                          ref.read(userMeProvider.notifier).login(
+                                username: username,
+                                password: password,
+                              );
                         },
-                      ),
-                    );
-                    
-                    final refreshToken = resp.data['refreshToken'];
-                    final accessToken = resp.data['accessToken'];
-
-                    final storage = ref.read(secureStorageProvider);
-                    
-                    await storage.write(key: REFRESH_TOKEN_KEY, value: refreshToken);
-                    await storage.write(key: ACCESS_TOKEN_KEY, value: accessToken);
-
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => RootTab()),
-                    );
-                    Logger().i(resp.data);
-                  },
                   child: const Text('로그인'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: PRIMARY_COLOR,
@@ -112,8 +80,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   height: 16,
                 ),
                 TextButton(
-                  onPressed: () {
-                  },
+                  onPressed: () {},
                   child: const Text('회원가입'),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.black,

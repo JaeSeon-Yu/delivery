@@ -1,7 +1,9 @@
+import 'package:actual/common/const/colors.dart';
 import 'package:actual/common/layout/default_layout.dart';
 import 'package:actual/common/model/cursor_pagination_model.dart';
 import 'package:actual/common/utils/pagination_utils.dart';
 import 'package:actual/product/component/product_card.dart';
+import 'package:actual/product/model/product_model.dart';
 import 'package:actual/rating/component/rating_card.dart';
 import 'package:actual/rating/model/rating_model.dart';
 import 'package:actual/restaurant/component/restaurant_card.dart';
@@ -9,12 +11,15 @@ import 'package:actual/restaurant/model/restaurant_detail_model.dart';
 import 'package:actual/restaurant/model/restaurant_model.dart';
 import 'package:actual/restaurant/provider/restaurant_provider.dart';
 import 'package:actual/restaurant/provider/restaurant_rating_provider.dart';
-import 'package:flutter/material.dart';
+import 'package:actual/user/provider/basket_provider.dart';
+import 'package:badges/badges.dart';
+import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:skeletons/skeletons.dart';
 
 class RestaurantDetailScreen extends ConsumerStatefulWidget {
+  static String get routeName => 'restaurant_detail';
   final String id;
 
   const RestaurantDetailScreen({
@@ -37,7 +42,6 @@ class _RestaurantDetailScreenState
 
     ref.read(restaurantProvider.notifier).getDetail(id: widget.id);
 
-
     controller.addListener(listener);
   }
 
@@ -45,17 +49,17 @@ class _RestaurantDetailScreenState
   Widget build(BuildContext context) {
     final state = ref.watch(restaurantDetailProvider(widget.id));
     final ratingsState = ref.watch(restaurantRatingProvider(widget.id));
-
+    final basket = ref.watch(basketProvider);
 
     Logger().i(ratingsState.toString());
 
-    if(ratingsState is CursorPagination){
+    if (ratingsState is CursorPagination) {
       Logger().i('${ratingsState.data}');
     }
-    if(ratingsState is CursorPaginationError){
+    if (ratingsState is CursorPaginationError) {
       Logger().i(ratingsState.msg);
     }
-    if(ratingsState is CursorPaginationLoading){
+    if (ratingsState is CursorPaginationLoading) {
       Logger().i('로딩중');
     }
 
@@ -68,6 +72,24 @@ class _RestaurantDetailScreenState
     }
     return DefaultLayout(
       title: state.name,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        backgroundColor: PRIMARY_COLOR,
+        child: Badge(
+          showBadge: basket.isNotEmpty,
+          badgeContent: Text(
+            basket
+                .fold(0, (previous, next) => previous + next.count)
+                .toString(),
+            style: TextStyle(
+              color: PRIMARY_COLOR,
+              fontSize: 10,
+            ),
+          ),
+          child: Icon(Icons.shopping_basket_outlined),
+          badgeColor: Colors.white,
+        ),
+      ),
       child: CustomScrollView(
         controller: controller,
         slivers: [
@@ -75,7 +97,7 @@ class _RestaurantDetailScreenState
           if (state is! RestaurantDetailModel) renderLoading(),
           if (state is RestaurantDetailModel) _renderLabel(),
           if (state is RestaurantDetailModel)
-            _renderProducts(products: state.products),
+            _renderProducts(restaurant: state, products: state.products),
           if (ratingsState is CursorPagination<RatingModel>)
             renderRatings(models: ratingsState.data),
         ],
@@ -121,15 +143,32 @@ class _RestaurantDetailScreenState
   }
 
   SliverPadding _renderProducts(
-      {required List<RestaurantProductModel> products}) {
+      {required RestaurantModel restaurant,
+      required List<RestaurantProductModel> products}) {
     return SliverPadding(
       padding: EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) {
-            return Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: ProductCard.fromModel(model: products[index]),
+            final model = products[index];
+            return InkWell(
+              onTap: () {
+                ref.read(basketProvider.notifier).addToBasket(
+                      product: ProductModel(
+                        id: model.id,
+                        name: model.name,
+                        detail: model.detail,
+                        imgUrl: model.imgUrl,
+                        price: model.price,
+                        restaurant: restaurant,
+                      ),
+                    );
+              },
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ProductCard.fromRestaurantProductModel(
+                    model: products[index]),
+              ),
             );
           },
           childCount: products.length,
@@ -153,7 +192,7 @@ class _RestaurantDetailScreenState
     required List<RatingModel> models,
   }) {
     return SliverPadding(
-      padding: EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (_, index) => Padding(

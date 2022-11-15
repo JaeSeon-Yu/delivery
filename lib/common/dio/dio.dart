@@ -1,5 +1,7 @@
 import 'package:actual/common/const/data.dart';
 import 'package:actual/common/secure_storage/secure_storage.dart';
+import 'package:actual/user/provider/auth_provider.dart';
+import 'package:actual/user/provider/user_me_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -11,7 +13,10 @@ final dioProvider = Provider((ref) {
   final storage = ref.watch(secureStorageProvider);
 
   dio.interceptors.add(
-    CustomInterceptor(storage: storage, ref: ref),
+    CustomInterceptor(
+      storage: storage,
+      ref: ref,
+    ),
   );
 
   return dio;
@@ -21,7 +26,10 @@ class CustomInterceptor extends Interceptor {
   final FlutterSecureStorage storage;
   final Ref ref;
 
-  CustomInterceptor({required this.storage, required this.ref});
+  CustomInterceptor({
+    required this.storage,
+    required this.ref,
+  });
 
   // 요청을 받을 때
   @override
@@ -76,7 +84,7 @@ class CustomInterceptor extends Interceptor {
 
     final isStatus401 = err.response?.statusCode == 401;
     final isPathRefresh = err.requestOptions.path == '/auth/token';
-    if (isStatus401 && isPathRefresh) {
+    if (isStatus401 && !isPathRefresh) {
       final dio = Dio();
       try {
         final resp = await dio.post(
@@ -102,6 +110,8 @@ class CustomInterceptor extends Interceptor {
 
         return handler.resolve(response);
       } on DioError catch (e) {
+        ref.read(authProvider.notifier).logout();
+
         return handler.reject(e);
       }
     }
