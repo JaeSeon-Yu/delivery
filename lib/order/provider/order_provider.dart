@@ -60,7 +60,7 @@ class OrderStateNotifier
     // }
 
     try {
-      await repository.postOrder(
+      final resp = await repository.postOrder(
         body: PostOrderBody(
           id: id,
           products: state

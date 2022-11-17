@@ -2,20 +2,39 @@ import 'package:actual/common/model/cursor_pagination_model.dart';
 import 'package:actual/common/model/model_with_id.dart';
 import 'package:actual/common/model/pagination_params.dart';
 import 'package:actual/common/repository/base_pagination_repository.dart';
+import 'package:debounce_throttle/debounce_throttle.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logger/logger.dart';
 
-class PaginationProvider<
-        T extends IModelWithId,
-        U extends IBasePaginationRepository<T>
-          >
+class _PaginationInfo {
+  final int fetchCount;
+
+  final bool fetchMore;
+
+  final bool forceRefetch;
+
+  _PaginationInfo({
+    this.fetchCount = 20,
+    this.fetchMore = false,
+    this.forceRefetch = false,
+  });
+}
+
+class PaginationProvider<T extends IModelWithId,
+        U extends IBasePaginationRepository<T>>
     extends StateNotifier<CursorPaginationBase> {
-
   final U repository;
+  final paginationThrottle = Throttle(
+    const Duration(seconds: 3),
+    initialValue: _PaginationInfo(),
+    checkEquality: false,
+  );
 
   PaginationProvider({required this.repository})
-      : super(CursorPaginationLoading()){
+      : super(CursorPaginationLoading()) {
     paginate();
+    paginationThrottle.values.listen((event) {
+      _throttledPagination(event);
+    });
   }
 
   Future<void> paginate({
@@ -25,6 +44,19 @@ class PaginationProvider<
     // true - CursorPaginationLoading()
     bool forceRefetch = false,
   }) async {
+    paginationThrottle.setValue(_PaginationInfo(
+      fetchCount: fetchCount,
+      fetchMore: fetchMore,
+      forceRefetch: forceRefetch,
+    ));
+  }
+
+  _throttledPagination(_PaginationInfo info) async {
+
+    final fetchCount = info.fetchCount;
+    final fetchMore = info.fetchMore;
+    final forceRefetch = info.forceRefetch;
+
     // 5가지 State 상태
     // CursorPagination - 정상적으로 데이터가 존재하는 상태
 
@@ -43,17 +75,12 @@ class PaginationProvider<
       if (state is CursorPagination && !forceRefetch) {
         final pState = state as CursorPagination;
 
-
         //hasMore == false
         if (!pState.meta.hasMore) {
           return;
         }
       }
-    }catch (e, stack) {
-      state = CursorPaginationError(msg: '1111 데이터를 가져오지 못했습니다.\nerror: $e\nstack: $stack ');
-    }
 
-    try {
       final isLoading = state is CursorPaginationLoading;
       final isRefetching = state is CursorPaginationRefetching;
       final isFetchingMore = state is CursorPaginationFetchingMore;
@@ -62,24 +89,15 @@ class PaginationProvider<
       if (fetchMore && (isLoading || isRefetching || isFetchingMore)) {
         return;
       }
-    }catch (e, stack) {
-      state = CursorPaginationError(msg: '2222 데이터를 가져오지 못했습니다.\nerror: $e\nstack: $stack ');
-    }
 
-    // PaginationParams 생성
-    PaginationParams paginationParams = PaginationParams(
-      count: fetchCount,
-    );
-
-    try {
+      // PaginationParams 생성
+      PaginationParams paginationParams = PaginationParams(
+        count: fetchCount,
+      );
 
       //fetchMore - 데이터를 추가로 받아오는 상황
       if (fetchMore) {
         final pState = (state as CursorPagination<T>);
-
-
-        Logger().i('fetch more true : $pState');
-
 
         state = CursorPaginationFetchingMore(
           meta: pState.meta,
@@ -95,9 +113,6 @@ class PaginationProvider<
           // 아래에 추가하는 경우
           final pState = state as CursorPagination<T>;
 
-
-          Logger().i('fetch more false : $pState');
-
           state = CursorPaginationRefetching<T>(
             meta: pState.meta,
             data: pState.data,
@@ -107,18 +122,9 @@ class PaginationProvider<
           state = CursorPaginationLoading();
         }
       }
-    }catch (e, stack) {
-      state = CursorPaginationError(msg: '3333 데이터를 가져오지 못했습니다.\nerror: $e\nstack: $stack ');
-    }
-
-    try{
-      Logger().i('Try');
       final resp = await repository.paginate(
         paginationParams: paginationParams,
       );
-
-
-      Logger().i('resp : ${resp.data.first}');
 
       if (state is CursorPaginationFetchingMore) {
         final pState = state as CursorPaginationFetchingMore<T>;
@@ -134,7 +140,8 @@ class PaginationProvider<
         state = resp;
       }
     } catch (e, stack) {
-      state = CursorPaginationError(msg: '4444 데이터를 가져오지 못했습니다.\nerror: $e\nstack: $stack ');
+      state = CursorPaginationError(
+          msg: '데이터를 가져오지 못했습니다.\nerror: $e\nstack: $stack ');
     }
   }
 }
