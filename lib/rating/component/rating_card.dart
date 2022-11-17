@@ -24,11 +24,11 @@ class RatingCard extends StatelessWidget {
   }) {
     return RatingCard(
       avatarImage: NetworkImage(
-        model.userModel.imageUrl,
+        model.user.imageUrl,
       ),
       images: model.imgUrls.map((e) => Image.network(e)).toList(),
       rating: model.rating,
-      email: model.userModel.username,
+      email: model.user.username,
       content: model.content,
     );
   }

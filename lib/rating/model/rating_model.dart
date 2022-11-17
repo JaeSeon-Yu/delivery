@@ -8,7 +8,7 @@ part 'rating_model.g.dart';
 @JsonSerializable()
 class RatingModel implements IModelWithId{
   final String id;
-  final UserModel userModel;
+  final UserModel user;
   final int rating;
   final String content;
   @JsonKey(
@@ -18,7 +18,7 @@ class RatingModel implements IModelWithId{
 
   RatingModel({
     required this.id,
-    required this.userModel,
+    required this.user,
     required this.rating,
     required this.content,
     required this.imgUrls,
