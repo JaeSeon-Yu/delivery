@@ -11,14 +11,14 @@ class OrderProductModel {
   final String name;
   final String detail;
   @JsonKey(fromJson: DataUtils.pathToUrl)
-  final String imaUrl;
+  final String imgUrl;
   final int price;
 
   OrderProductModel({
     required this.id,
     required this.name,
     required this.detail,
-    required this.imaUrl,
+    required this.imgUrl,
     required this.price,
   });
 
@@ -28,7 +28,7 @@ class OrderProductModel {
 
 @JsonSerializable()
 class OrderProductAndCountModel {
-  final OrderProductAndCountModel product;
+  final OrderProductModel product;
   final int count;
 
   OrderProductAndCountModel({
