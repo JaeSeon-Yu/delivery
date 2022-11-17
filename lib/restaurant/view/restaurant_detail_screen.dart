@@ -17,7 +17,6 @@ import 'package:badges/badges.dart';
 import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:logger/logger.dart';
 import 'package:skeletons/skeletons.dart';
 
 class RestaurantDetailScreen extends ConsumerStatefulWidget {
@@ -52,18 +51,6 @@ class _RestaurantDetailScreenState
     final state = ref.watch(restaurantDetailProvider(widget.id));
     final ratingsState = ref.watch(restaurantRatingProvider(widget.id));
     final basket = ref.watch(basketProvider);
-
-    Logger().i(ratingsState.toString());
-
-    if (ratingsState is CursorPagination) {
-      Logger().i('${ratingsState.data}');
-    }
-    if (ratingsState is CursorPaginationError) {
-      Logger().i(ratingsState.msg);
-    }
-    if (ratingsState is CursorPaginationLoading) {
-      Logger().i('로딩중');
-    }
 
     if (state == null) {
       return DefaultLayout(
